@@ -1,0 +1,109 @@
+WRITE UP TUTORIAL 7
+
+LESSON LEARNED :
+- Mempelajari web service dan REST serta manfaatnya
+- Mempelajari perbedaan antara database service dan web service
+
+Latihan 1 :
+- Method yang dibuat adalah viewall pada StudentRestController , berikut sekilas method yang dibuat :
+
+ @RequestMapping("/student/viewall")
+    public List<StudentModel> viewall (Model model)
+    {
+        List<StudentModel> students = studentService.selectAllStudents ();
+        
+//        for(int i=0; i < students.size();i++) {
+//        	StudentModel student = students.get(i);
+//        	return student;
+//        }
+        return students;
+    }
+	 }
+Method ini mengambil semua list student melalui method selectAllStudents di studentService dan menampilkan list json student tersebut.
+
+Latihan 2 : 
+- View Course by ID
+
+Method yang dibuat yaitu di StudentRestController, berikut sekilas method yang dibuat :
+
+@RequestMapping("/course/view/{idCourse}")
+	 public CourseModel viewCoursePath (Model model,
+			 @PathVariable(value = "idCourse") String idCourse)
+	 {
+		 CourseModel course = studentService.selectCourse (idCourse);
+
+		 return course;
+	 }
+
+Method tersebut mengembalikan json course yang diambil dari id-nya
+
+- View all course
+
+Ada 2 method yang dibuat yaitu method viewCourseAll di StudentRestController :
+
+@RequestMapping("/course/viewall")
+	 public List<CourseModel> viewCourseAll ()
+	 {
+		 List<CourseModel> courses = studentService.selectCourseAll ();
+
+		 return courses;
+	 }
+
+dan mapping ke database di StudentMapper :
+
+@Select("select id_course, name, credits from course")
+    @Results(value = {
+    		@Result(property="idCourse", column="id_course"),
+    		@Result(property="name", column="name"),
+    		@Result(property="credits", column="credits"),
+    		@Result(property="students", column="id_course",
+    		javaType = List.class,
+    		many=@Many(select="selectStudents"))
+    })
+	List<CourseModel> selectAllCourses();
+
+ Di StudentRestController, seperti halnya method viewall, method ini mengembalikan list json course.
+
+Latihan 3 :
+- Di kelas StudentDAOImpl, ditambahkan method untuk mengambil web service dari URI yang disediakan :
+
+ @Override
+	public List<StudentModel> selectAllStudents() {
+		// TODO Auto-generated method stub
+		List<StudentModel> students = restTemplate.getForObject("http://localhost:8080/rest/student/viewall",
+				List.class);
+		return students;
+	}
+
+Method ini mengambil list json, dan menampilkannya ke halaman view yang sudah ada.
+
+Method lain terdapat di StudentServiceRest untuk menghubungkan ke studentDao
+
+@Override
+	public List<StudentModel> selectAllStudents() {
+		// TODO Auto-generated method stub
+		log.info("REST = select all students");
+		return studentDAO.selectAllStudents();
+	}
+
+Latihan 4 :
+- View Course by Id, terdapat method di StudentDAOIpl (implementasi untuk method yang sebelumnya ditulis di StudentDAO)
+
+@Override
+	public CourseModel selectCourse(String idCourse) {
+		// TODO Auto-generated method stub
+		CourseModel course =
+				restTemplate.getForObject(
+						"http://localhost:8080/rest/course/view/"+idCourse, 
+						CourseModel.class);
+		return course;
+	}
+
+Method lainnya yaitu terdapat di StudentServiceRest
+
+@Override
+	public CourseModel selectCourse(String idCourse) {
+		// TODO Auto-generated method stub
+		log.info("REST = select course with id {}", idCourse);
+		return studentDAO.selectCourse(idCourse);
+	}
